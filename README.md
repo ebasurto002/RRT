@@ -7,3 +7,4 @@ Básicamente se trata de código de referencia hecho en Mathematica y en OMNET q
 
 Es la primera versión y puede estar sujeto a modificaciones y reestructuración.
 
+Hola, soy Estrella Basurto Domínguez
