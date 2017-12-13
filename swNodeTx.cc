@@ -12,6 +12,13 @@
 
 using namespace omnetpp;
 
+//Variables globales máquina de estados
+
+short const idle = 0;
+short const sending = 1;
+short const waitAck = 2;
+
+
 class swNodeTx: public cSimpleModule {
 
     private:
@@ -19,45 +26,52 @@ class swNodeTx: public cSimpleModule {
         int txdpackets;
         simtime_t timeout;
         cMessage *timeoutEvent;
-        struct arrivals{
-            double llegadas;
-            paquete *packet;
-        };
-        arrivals *arr;
-        cMessage *sendEvent;
+        cMessage *sent; //Evento que indica cuándo se ha enviado un mensaje
+        paquete *pckt;
+        cChannel *txChannel;
+        cQueue *txQueue;
+        short status; //para indicar el estado
+    public:
+        swNodeTx();
+        virtual ~swNodeTx();
     protected:
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
+        virtual void sendCopyOf(cMessage *msg);
         virtual void finish() override;
 };
+
+Define_module(swNodeTx);
+
+swNodeTx::swNodeTx(){
+    /*constructor*/
+    status = idle;
+    txChannel = NULL;
+    txQueue = NULL;
+    sent = NULL;
+    pckt = NULL;
+}
+
+swNodeTx::~swNodeTx(){
+    /*Destructor*/
+    cancelAndDelete(sent);
+    delete pckt;
+    txQueue->~cQueue();
+}
+
 
 void swNodeTx::initialize(){
 
     timeout = par("timeout");
     timeoutEvent = new cMessage("timeoutEvent");
 
-    //Construcción de la lista de paquetes que tiene el nodo para tx
-    arr = new arrivals[(int)par("nPaquetes")];
-
-    for(int i = 0; i<(int)par("nPaquetes"); i++){
-
-        arr[i].llegadas = (double)par("interArrivalsTime");
-
-        if(i!=0){
-            arr[i].llegadas += arr[i-1].llegadas;
-        }
-
-        paquete *msg = new paquete("mensaje");
-        msg -> setByteLength((int)par("longPaquetes"));
-        msg -> setNumSeq(i);
-
-        arr[i].packet = msg;
-    }
+    txChannel = gate("out")->getTransmissionChannel();
+    txQueue = new cQueue("txQueue");
+    sent = new cMessage("sent");
+    WATCH(status);
 
     numPaquete = 0;
     txdpackets = 0;
-    sendEvent = new cMessage("sendEvent");
-    scheduleAt(arr[0].llegadas,sendEvent);
 
 }
 void swNodeTx::handleMessage(cMessage *msg){
@@ -65,17 +79,13 @@ void swNodeTx::handleMessage(cMessage *msg){
     //Caso de que expire el temporizador
     if(msg == timeoutEvent){
         EV<<"Timeout expired, resending packet..." << endl;
-        send(arr[numPaquete].packet -> dup(),"out");
-        scheduleAt(simTime()+timeout,timeoutEvent);
+        bubble("Tx timeout. Gotta resend message");
+        sendCopyOf(pckt);
         txdpackets++;
 
     }
-
-    //Caso de que se avise al nodo de que tiene un paquete para enviar
-    if(msg == sendEvent){
-        send(arr[numPaquete].packet -> dup(),"out");
-        scheduleAt(simTime()+timeout,timeoutEvent);
-        txdpackets++;
+    if(msg == sent){
+        status = waitAck;
     }
     else{
         //Caso de haberse perdido el ACK
@@ -97,6 +107,10 @@ void swNodeTx::handleMessage(cMessage *msg){
         }
         delete msg;
     }
+
+}
+
+void swNodeTx::sendCopyOf(cMessage *msg){
 
 }
 

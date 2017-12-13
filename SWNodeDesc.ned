@@ -20,20 +20,27 @@ simple swNodeTx
         double interArrivalsTime = default(1.0);
         int nPaquetes = default(100);
         int longPaquetes = default(100);
-        double pErrACK = default(0.1);
         double timeout = default(1.0);
     gates:
         input in;
+        input inSnd;
         output out;
 }
 simple swNodeRx
 {
     parameters:
-        @display("i=block/routing");
-        double pErrPacket = default(0.1);       
+        @display("i=block/routing");       
     gates:
         input in;
         output out;
+}
+
+simple injector
+{
+    parameters:
+        @display("i=block/source");
+    gates:
+        output outSnd;
 }
 
 network swNetwork
@@ -42,11 +49,14 @@ network swNetwork
         channel C extends ned.DatarateChannel {
             datarate = 9600bps;
             delay=100ms;
+            per= default(0.01);
         }
     submodules:
         swSndr: swNodeTx;
         swRcvr: swNodeRx;
+        src: injector;
     connections:
+        src.outSnd --> swSndr.inSnd;
         swSndr.out --> C --> swRcvr.in;
         swSndr.in <-- C <-- swRcvr.out;
 }
