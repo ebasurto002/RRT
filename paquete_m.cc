@@ -182,6 +182,7 @@ Register_Class(paquete)
 paquete::paquete(const char *name, short kind) : ::omnetpp::cPacket(name,kind)
 {
     this->numSeq = 0;
+    this->type = 0;
 }
 
 paquete::paquete(const paquete& other) : ::omnetpp::cPacket(other)
@@ -204,18 +205,21 @@ paquete& paquete::operator=(const paquete& other)
 void paquete::copy(const paquete& other)
 {
     this->numSeq = other.numSeq;
+    this->type = other.type;
 }
 
 void paquete::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::omnetpp::cPacket::parsimPack(b);
     doParsimPacking(b,this->numSeq);
+    doParsimPacking(b,this->type);
 }
 
 void paquete::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::omnetpp::cPacket::parsimUnpack(b);
     doParsimUnpacking(b,this->numSeq);
+    doParsimUnpacking(b,this->type);
 }
 
 int paquete::getNumSeq() const
@@ -226,6 +230,16 @@ int paquete::getNumSeq() const
 void paquete::setNumSeq(int numSeq)
 {
     this->numSeq = numSeq;
+}
+
+unsigned short paquete::getType() const
+{
+    return this->type;
+}
+
+void paquete::setType(unsigned short type)
+{
+    this->type = type;
 }
 
 class paqueteDescriptor : public omnetpp::cClassDescriptor
@@ -293,7 +307,7 @@ const char *paqueteDescriptor::getProperty(const char *propertyname) const
 int paqueteDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount() : 1;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int paqueteDescriptor::getFieldTypeFlags(int field) const
@@ -306,8 +320,9 @@ unsigned int paqueteDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *paqueteDescriptor::getFieldName(int field) const
@@ -320,8 +335,9 @@ const char *paqueteDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "numSeq",
+        "type",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
 
 int paqueteDescriptor::findField(const char *fieldName) const
@@ -329,6 +345,7 @@ int paqueteDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='n' && strcmp(fieldName, "numSeq")==0) return base+0;
+    if (fieldName[0]=='t' && strcmp(fieldName, "type")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -342,8 +359,9 @@ const char *paqueteDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "int",
+        "unsigned short",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **paqueteDescriptor::getFieldPropertyNames(int field) const
@@ -411,6 +429,7 @@ std::string paqueteDescriptor::getFieldValueAsString(void *object, int field, in
     paquete *pp = (paquete *)object; (void)pp;
     switch (field) {
         case 0: return long2string(pp->getNumSeq());
+        case 1: return ulong2string(pp->getType());
         default: return "";
     }
 }
@@ -426,6 +445,7 @@ bool paqueteDescriptor::setFieldValueAsString(void *object, int field, int i, co
     paquete *pp = (paquete *)object; (void)pp;
     switch (field) {
         case 0: pp->setNumSeq(string2long(value)); return true;
+        case 1: pp->setType(string2ulong(value)); return true;
         default: return false;
     }
 }

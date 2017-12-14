@@ -14,4 +14,5 @@
 //
 packet paquete {
     int numSeq;
+    unsigned short type;
 }

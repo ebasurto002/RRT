@@ -18,6 +18,10 @@ short const idle = 0;
 short const sending = 1;
 short const waitAck = 2;
 
+//Tipos de respuesta
+short const ack = 1;
+short const nack = 2;
+
 
 class swNodeTx: public cSimpleModule {
 
@@ -37,7 +41,7 @@ class swNodeTx: public cSimpleModule {
     protected:
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
-        virtual void sendCopyOf(cMessage *msg);
+        virtual void sendCopyOf(paquete *msg);
         virtual void finish() override;
 };
 
@@ -81,36 +85,66 @@ void swNodeTx::handleMessage(cMessage *msg){
         EV<<"Timeout expired, resending packet..." << endl;
         bubble("Tx timeout. Gotta resend message");
         sendCopyOf(pckt);
-        txdpackets++;
-
     }
     if(msg == sent){
         status = waitAck;
+        scheduleAt(simTime()+timeout,timeoutEvent);
+        txdpackets++;
     }
     else{
-        //Caso de haberse perdido el ACK
-        if(uniform(0,1)<par("pErrACK").doubleValue()){
-            EV<<"ACK Lost"<<endl;
-            bubble("ACK Lost");
-        }
-        //Caso de que vaya bien
-        else{
-            EV<<"Cancelling timeout"<<endl;
-            cancelEvent(timeoutEvent);
 
-            numPaquete++;
-            if(numPaquete < (int) par("nPaquetes")){
-                //Hay que mirar si hay paquetes en la cola o aún no han llegado. Como la simulación de Stop&Wait de Mathematica
-                double time = std::max(simTime().dbl(),arr[numPaquete].llegadas);
-                scheduleAt(time,sendEvent);
+        //Reibir paquete de fuera
+        paquete *pqt = cast_and_check<paquete *>(msg);
+        //Switch con cases para los diferentes estados
+        if(msg->arrivedOn("inSnd")){
+            switch(status){
+                case idle:
+                    message = pqt;
+                    sendCopyOf(message);
+                    break;
+                case sending:
+                    txQueue->insert(pqt);
+                    break;
+                case waitAck:
+                    txQueue->insert(pqt);
+                    break;
+                default:
+                    break;
             }
         }
-        delete msg;
+        else{
+            //El paquete llega desde el otro extremo. Es decir, es un ACK o un NACK
+            switch(pqt ->getType()){
+                case ack:
+                    if(txQueue->isEmpty()){
+                        status = idle;
+                        numPaquete++;
+                    }
+                    else{
+                        numPaquete++;
+                        delete(message);
+                        message = (paquete *)txQueue->pop();
+                        sendCopyOf(message);
+                    }
+                    break;
+                case nack:
+                    sendCopyOf(message);
+                    break;
+                default:
+                    break;
+            }
+        }
+        delete(message);
     }
 
 }
 
-void swNodeTx::sendCopyOf(cMessage *msg){
+void swNodeTx::sendCopyOf(paquete *msg){
+    paquete *copy = (paquete *)msg->dup();
+    send(copy,"out");
+    status = sending;
+    simtime_t txFinished = txChannel->getTransmissionFinishTime();
+    scheduleAt(txFinished,sent);
 
 }
 

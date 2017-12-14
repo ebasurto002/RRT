@@ -38,6 +38,7 @@
  * packet paquete
  * {
  *     int numSeq;
+ *     unsigned short type;
  * }
  * </pre>
  */
@@ -45,6 +46,7 @@ class paquete : public ::omnetpp::cPacket
 {
   protected:
     int numSeq;
+    unsigned short type;
 
   private:
     void copy(const paquete& other);
@@ -65,6 +67,8 @@ class paquete : public ::omnetpp::cPacket
     // field getter/setter methods
     virtual int getNumSeq() const;
     virtual void setNumSeq(int numSeq);
+    virtual unsigned short getType() const;
+    virtual void setType(unsigned short type);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const paquete& obj) {obj.parsimPack(b);}
