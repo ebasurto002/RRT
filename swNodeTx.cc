@@ -28,6 +28,7 @@ class swNodeTx: public cSimpleModule {
     private:
         int numPaquete;
         int txdpackets;
+        paquete *message;
         simtime_t timeout;
         cMessage *timeoutEvent;
         cMessage *sent; //Evento que indica cuándo se ha enviado un mensaje
@@ -45,7 +46,7 @@ class swNodeTx: public cSimpleModule {
         virtual void finish() override;
 };
 
-Define_module(swNodeTx);
+Define_Module(swNodeTx);
 
 swNodeTx::swNodeTx(){
     /*constructor*/
@@ -54,6 +55,7 @@ swNodeTx::swNodeTx(){
     txQueue = NULL;
     sent = NULL;
     pckt = NULL;
+    message = NULL;
 }
 
 swNodeTx::~swNodeTx(){
@@ -94,7 +96,7 @@ void swNodeTx::handleMessage(cMessage *msg){
     else{
 
         //Reibir paquete de fuera
-        paquete *pqt = cast_and_check<paquete *>(msg);
+        paquete *pqt = check_and_cast<paquete *>(msg);
         //Switch con cases para los diferentes estados
         if(msg->arrivedOn("inSnd")){
             switch(status){
@@ -149,7 +151,7 @@ void swNodeTx::sendCopyOf(paquete *msg){
 }
 
 void swNodeTx::finish(){
-
+//Cosas de las estadísticas
 }
 
 
