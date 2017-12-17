@@ -38,6 +38,15 @@ void injector::initialize(){
 
 void injector::handleMessage(cMessage *msg){
     paquete *pqt = generaPaquete();
+    send(pqt,"outSnd");
+    scheduleAt(simTime()+exponential(startTime),nuevoPqt);
+}
+paquete * injector::generaPaquete(){
+    char nombrePaquete[15];
+    sprintf(nombrePaquete,"msg-%d",numSeq++);
+    paquete *msg = new paquete(nombrePaquete,0);
+    msg -> setBitLength(1024);
+    return msg;
 }
 
 
