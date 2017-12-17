@@ -36,6 +36,9 @@ class swNodeTx: public cSimpleModule {
         cChannel *txChannel;
         cQueue *txQueue;
         short status; //para indicar el estado
+        //Para recoger estadísticas
+        cLongHistogram thStat;
+        cOutVector thVector;
     public:
         swNodeTx();
         virtual ~swNodeTx();
@@ -78,6 +81,10 @@ void swNodeTx::initialize(){
 
     numPaquete = 0;
     txdpackets = 0;
+
+    thStat.setName("Throughput Statistics");
+    thStat.setRangeAutoUpper(0, 10, 1.5);
+    thVector.setName("throughput");
 
 }
 void swNodeTx::handleMessage(cMessage *msg){
@@ -138,6 +145,9 @@ void swNodeTx::handleMessage(cMessage *msg){
         }
         delete(message);
     }
+    double throughput = numPaquete/simTime();
+    thVector.record(throughput);
+    thStat.collect(throughput);
 
 }
 
@@ -152,6 +162,7 @@ void swNodeTx::sendCopyOf(paquete *msg){
 
 void swNodeTx::finish(){
 //Cosas de las estadísticas
+
 }
 
 
