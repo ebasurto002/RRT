@@ -18,8 +18,6 @@ simple swNodeTx
     parameters:
         @display("i=block/routing");
         double interArrivalsTime = default(1.0);
-        int nPaquetes = default(100);
-        int longPaquetes = default(100);
         double timeout = default(1.0);
     gates:
         input in;
