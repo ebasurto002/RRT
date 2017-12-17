@@ -162,6 +162,10 @@ void swNodeTx::sendCopyOf(paquete *msg){
 
 void swNodeTx::finish(){
 //Cosas de las estadísticas
+    double pkgErrorRate = (1-(double)numPaquete/(double)txdpackets);
+    EV<<"Package error rate: "<<pkgErrorRate<<endl;
+    EV<<"Throughput: "<<numPaquete/simTime()<<endl;
+    thStat.recordAs("Throughput");
 
 }
 
