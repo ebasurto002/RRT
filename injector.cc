@@ -20,7 +20,7 @@ class injector: public cSimpleModule{
     protected:
         virtual void handleMessage(cMessage *msg) override;
         virtual paquete * generaPaquete();
-        virtual void intialize() override;
+        virtual void initialize() override;
 };
 
 Define_Module(injector);
@@ -32,7 +32,7 @@ injector::~injector(){
 void injector::initialize(){
     startTime = 20;
     nuevoPqt = new paquete();
-    seq = 0;
+    numSeq = 0;
     scheduleAt(startTime, nuevoPqt);
 }
 
@@ -43,9 +43,11 @@ void injector::handleMessage(cMessage *msg){
 }
 paquete * injector::generaPaquete(){
     char nombrePaquete[15];
-    sprintf(nombrePaquete,"msg-%d",numSeq++);
+    sprintf(nombrePaquete,"msg-%d",numSeq);
     paquete *msg = new paquete(nombrePaquete,0);
     msg -> setBitLength(1024);
+    msg -> setNumSeq(numSeq);
+    numSeq++;
     return msg;
 }
 

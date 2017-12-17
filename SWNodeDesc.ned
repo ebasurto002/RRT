@@ -17,7 +17,6 @@ simple swNodeTx
 {
     parameters:
         @display("i=block/routing");
-        double interArrivalsTime = default(1.0);
         double timeout = default(1.0);
     gates:
         input in;
@@ -47,7 +46,7 @@ network swNetwork
         channel C extends ned.DatarateChannel {
             datarate = 9600bps;
             delay=100ms;
-            per= default(0.01);
+            per= 0.01;
         }
     submodules:
         swSndr: swNodeTx;
