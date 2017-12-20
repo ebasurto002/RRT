@@ -46,7 +46,7 @@ network swNetwork
         channel C extends ned.DatarateChannel {
             datarate = 9600bps;
             delay=100ms;
-            per= 0.01;
+            per= 0.5;
         }
     submodules:
         swSndr: swNodeTx;

@@ -93,9 +93,10 @@ void swNodeTx::handleMessage(cMessage *msg){
     if(msg == timeoutEvent){
         EV<<"Timeout expired, resending packet..." << endl;
         bubble("Tx timeout. Gotta resend message");
-        sendCopyOf(pckt);
+        sendCopyOf(message);
     }
-    if(msg == sent){
+
+    else if(msg == sent){
         status = waitAck;
         scheduleAt(simTime()+timeout,timeoutEvent);
         txdpackets++;
@@ -122,9 +123,11 @@ void swNodeTx::handleMessage(cMessage *msg){
             }
         }
         else{
+            EV<< "Mensaje recibido desde el extremo Rx"<<endl;
             //El paquete llega desde el otro extremo. Es decir, es un ACK o un NACK
             switch(pqt ->getType()){
                 case ack:
+                    cancelEvent(timeoutEvent);
                     if(txQueue->isEmpty()){
                         status = idle;
                         numPaquete++;
@@ -137,13 +140,14 @@ void swNodeTx::handleMessage(cMessage *msg){
                     }
                     break;
                 case nack:
+                    cancelEvent(timeoutEvent);
                     sendCopyOf(message);
                     break;
                 default:
                     break;
             }
         }
-        delete(message);
+        //delete(message);
     }
     double throughput = numPaquete/simTime();
     thVector.record(throughput);

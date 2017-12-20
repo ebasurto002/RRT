@@ -39,7 +39,7 @@ void injector::initialize(){
 void injector::handleMessage(cMessage *msg){
     paquete *pqt = generaPaquete();
     send(pqt,"outSnd");
-    scheduleAt(simTime()+exponential(startTime),nuevoPqt);
+    scheduleAt(simTime()+exponential(2),nuevoPqt);
 }
 paquete * injector::generaPaquete(){
     char nombrePaquete[15];
