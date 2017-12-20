@@ -25,14 +25,17 @@ class gbnNodeTx: public cSimpleModule {
     private:
         int numPaquete;
         int txdpackets;
+        int pck2Repeat;
+        int totalRep;
         paquete *message;
         simtime_t timeout;
         cMessage *timeoutEvent;
         cMessage *sent; //Evento que indica cuándo se ha enviado un mensaje
-        paquete *pckt;
         cChannel *txChannel;
         cQueue *txQueue;
+        cQueue *nACKQueue;
         short status; //para indicar el estado
+
         //Para recoger estadísticas
         cLongHistogram thStat;
         cOutVector thVector;
@@ -44,6 +47,76 @@ class gbnNodeTx: public cSimpleModule {
         virtual void handleMessage() override;
         virtual void sendCopyOf();
 };
+
+Define_module(gbnNodeTx);
+
+gbnNodeTx::gbnNodeTx(){
+    status = idle;
+    txQueue = NULL;
+    nACKQueue = NULL;
+    txChannel = NULL;
+    message = NULL;
+    sent = NULL;
+    numPaquete = 0;
+    txdpackets = 0;
+    pck2Repeat = 0;
+    totalRep = 0;
+}
+gbnNodeTx::~gbnNodeTx(){
+    cancelAndDelete(sent);
+    cancelAndDelete(timeoutEvent);
+    delete(message);
+    txQueue->~cQueue();
+    nACKQueue->~cQueue();
+}
+void gbnNodeTx::initialize(){
+    txChannel = gate("out")->getTransmissionChannel();
+    sent = new cMessage("sent");
+    txQueue = new cQueue("txQueue");
+    nACKQueue = new cQueue("nACKQueue");
+    WATCH(status);
+
+}
+void gbnNodeTx::handleMessage(cMessage *msg){
+
+    if(msg == sent){
+        //El evento que se recibe, indica que ya se ha enviado un paquete
+        switch(status){
+            case send_in://He mandado un paquete que no pertenecía a una retransmisión
+                if(txQueue->isEmpty()){
+                    status = idle;
+                }
+                else{
+                    message = (paquete *)txQueue->pop();
+                    paquete *copy = (paquete *) message->dup();
+                    nACKQueue->insert(copy);
+                    sendCopyOf(message);
+                    status = send_in;
+                }
+                break;
+            case send_rep:
+                if(pck2Repeat == totalRep){
+                    if(txQueue->isEmpty()){
+                        status = idle;
+                    }
+                    else{
+                        message = (paquete *)txQueue->pop();
+                        paquete *copy = (paquete *) message->dup();
+                        nACKQueue->insert(copy);
+                        sendCopyOf(message);
+                        status = send_in;
+                    }
+                }
+                else{
+
+                }
+                break;
+        }
+    }
+    else{
+        //Ack o Nack
+    }
+}
 
 
 
