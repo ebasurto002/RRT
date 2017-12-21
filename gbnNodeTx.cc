@@ -108,13 +108,48 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                     }
                 }
                 else{
-
+                    message = (paquete *)nACKQueue->get(pck2Repeat++);
+                    sendCopyOf(message);
+                    status=send_rep;
                 }
+                break;
+            default:
                 break;
         }
     }
     else{
-        //Ack o Nack
+        //Ack, Nack o paquete de la fuente
+
+        paquete *pckt = check_and_cast<paquete *>(msg);
+
+        //Paquete de la fuente
+        if(msg->arrivedOn("inSnd")){
+            switch(status){
+                case idle:
+                    message = pckt;
+                    paquete *copy = (paquete *)message ->dup();
+                    nACKQueue->insert(copy);
+                    sendCopyOf(message);
+                    status = send_in;
+                    break;
+                case send_in:
+                    txQueue->insert(pckt);
+                    break;
+                case send_rep:
+                    txQueue->insert(pckt);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        else{
+            //Ack o nack
+            switch(pckt->getType()){
+                case ack:
+            }
+        }
+
     }
 }
 
