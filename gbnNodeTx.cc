@@ -147,10 +147,34 @@ void gbnNodeTx::handleMessage(cMessage *msg){
             //Ack o nack
             switch(pckt->getType()){
                 case ack:
+                    paquete *pq = (paquete*)nACKQueue->pop();//Se extrae el paquete de la cola
+                    delete(pq);//Y se elimina
+                    pck2Repeat--; //Se ajusta el número del paquete que hay que repetir
+                    totalRep--; //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
+                    //Si hubiera variables para las estadísticas. Hacerlo al final
+                    break;
+                case nack:
+                    //En este caso hay que retransmitir los paquetes de la cola
+                    totalRep = nACKQueue->getLength();
+                    pck2Repeat = 0;
+
+                    //Ahora sólo puedo enviar si el estado es Idle. Si no, me espero a que me llegue un "Sent"
+                    if(status == idle){
+                        paquete *pck = (paquete*)nACKQueue->get(pck2Repeat++); //Se coge el paquete y se aumenta el índice
+                        sendCopyOf(pck);
+                    }
+                    break;
             }
         }
 
     }
+}
+void gbnNodeTx::sendCopyOf(paquete *msg){
+    //Se hace una copia del paquete
+    paquete *copy = (paquete*)msg->dup();
+    send(copy, "out");
+    simtime_t txFinishTime = txChannel->getTransmissionFinishTime();
+    scheduleAt(txFinishTime,sent);
 }
 
 
