@@ -44,11 +44,11 @@ class gbnNodeTx: public cSimpleModule {
         virtual ~gbnNodeTx();
     protected:
         virtual void initialize() override;
-        virtual void handleMessage() override;
-        virtual void sendCopyOf();
+        virtual void handleMessage(cMessage* msg) override;
+        virtual void sendCopyOf(paquete *msg);
 };
 
-Define_module(gbnNodeTx);
+Define_Module(gbnNodeTx);
 
 gbnNodeTx::gbnNodeTx(){
     status = idle;
@@ -126,12 +126,14 @@ void gbnNodeTx::handleMessage(cMessage *msg){
         if(msg->arrivedOn("inSnd")){
             switch(status){
                 case idle:
+                {
                     message = pckt;
                     paquete *copy = (paquete *)message ->dup();
                     nACKQueue->insert(copy);
                     sendCopyOf(message);
                     status = send_in;
                     break;
+                }
                 case send_in:
                     txQueue->insert(pckt);
                     break;
@@ -147,12 +149,14 @@ void gbnNodeTx::handleMessage(cMessage *msg){
             //Ack o nack
             switch(pckt->getType()){
                 case ack:
+                {
                     paquete *pq = (paquete*)nACKQueue->pop();//Se extrae el paquete de la cola
                     delete(pq);//Y se elimina
                     pck2Repeat--; //Se ajusta el número del paquete que hay que repetir
                     totalRep--; //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
                     //Si hubiera variables para las estadísticas. Hacerlo al final
                     break;
+                }
                 case nack:
                     //En este caso hay que retransmitir los paquetes de la cola
                     totalRep = nACKQueue->getLength();
