@@ -82,7 +82,8 @@ void gbnNodeTx::handleMessage(cMessage *msg){
     if(msg == sent){
         //El evento que se recibe, indica que ya se ha enviado un paquete
         switch(status){
-            case send_in://He mandado un paquete que no pertenecía a una retransmisión
+            case send_in:
+            {//He mandado un paquete que no pertenecía a una retransmisión
                 if(txQueue->isEmpty()){
                     status = idle;
                 }
@@ -94,7 +95,9 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                     status = send_in;
                 }
                 break;
+            }
             case send_rep:
+            {
                 if(pck2Repeat == totalRep){
                     if(txQueue->isEmpty()){
                         status = idle;
@@ -113,8 +116,11 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                     status=send_rep;
                 }
                 break;
+            }
             default:
+            {
                 break;
+            }
         }
     }
     else{
@@ -135,13 +141,19 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                     break;
                 }
                 case send_in:
+                {
                     txQueue->insert(pckt);
                     break;
+                }
                 case send_rep:
+                {
                     txQueue->insert(pckt);
                     break;
+                }
                 default:
+                {
                     break;
+                }
             }
 
         }
@@ -152,12 +164,13 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                 {
                     paquete *pq = (paquete*)nACKQueue->pop();//Se extrae el paquete de la cola
                     delete(pq);//Y se elimina
-                    pck2Repeat--; //Se ajusta el número del paquete que hay que repetir
-                    totalRep--; //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
+                    --pck2Repeat; //Se ajusta el número del paquete que hay que repetir
+                    --totalRep; //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
                     //Si hubiera variables para las estadísticas. Hacerlo al final
                     break;
                 }
                 case nack:
+                {
                     //En este caso hay que retransmitir los paquetes de la cola
                     totalRep = nACKQueue->getLength();
                     pck2Repeat = 0;
@@ -167,7 +180,9 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                         paquete *pck = (paquete*)nACKQueue->get(pck2Repeat++); //Se coge el paquete y se aumenta el índice
                         sendCopyOf(pck);
                     }
+                    status = send_rep;
                     break;
+                }
             }
         }
 
@@ -178,7 +193,7 @@ void gbnNodeTx::sendCopyOf(paquete *msg){
     paquete *copy = (paquete*)msg->dup();
     send(copy, "out");
     simtime_t txFinishTime = txChannel->getTransmissionFinishTime();
-    scheduleAt(txFinishTime,sent);
+    scheduleAt(txFinishTime+1,sent);
 }
 
 
