@@ -36,6 +36,7 @@ simple injector
 {
     parameters:
         @display("i=block/source");
+        int n_paquetes = default(1000);
     gates:
         output outSnd;
 }
@@ -44,7 +45,7 @@ network swNetwork
 {
     types:
         channel C extends ned.DatarateChannel {
-            datarate = 9600bps;
+            datarate = 96000bps;
             delay=100ms;
             per= 0.5;
         }

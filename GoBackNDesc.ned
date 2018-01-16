@@ -27,7 +27,7 @@ simple gbnNodeTx {
 network gbnNetwork {
     types:
         channel CGBN extends ned.DatarateChannel {
-            datarate = 9600bps;
+            datarate = 96000bps;
             delay=100ms;
             per= 0.5;
         }

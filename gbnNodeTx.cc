@@ -46,6 +46,7 @@ class gbnNodeTx: public cSimpleModule {
         virtual void initialize() override;
         virtual void handleMessage(cMessage* msg) override;
         virtual void sendCopyOf(paquete *msg);
+        virtual void finish() override;
 };
 
 Define_Module(gbnNodeTx);
@@ -162,11 +163,14 @@ void gbnNodeTx::handleMessage(cMessage *msg){
             switch(pckt->getType()){
                 case ack:
                 {
-                    paquete *pq = (paquete*)nACKQueue->pop();//Se extrae el paquete de la cola
-                    delete(pq);//Y se elimina
-                    --pck2Repeat; //Se ajusta el número del paquete que hay que repetir
-                    --totalRep; //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
-                    //Si hubiera variables para las estadísticas. Hacerlo al final
+                    if(nACKQueue->getLength() != 0){
+                        paquete *pq = (paquete*)nACKQueue->pop();//Se extrae el paquete de la cola
+                        delete(pq);//Y se elimina
+                        pck2Repeat = 0; //Se ajusta el número del paquete que hay que repetir
+                        totalRep = nACKQueue->getLength(); //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
+                        //Si hubiera variables para las estadísticas. Hacerlo al final
+                    }
+                    txdpackets++;
                     break;
                 }
                 case nack:
@@ -193,7 +197,12 @@ void gbnNodeTx::sendCopyOf(paquete *msg){
     paquete *copy = (paquete*)msg->dup();
     send(copy, "out");
     simtime_t txFinishTime = txChannel->getTransmissionFinishTime();
-    scheduleAt(txFinishTime+1,sent);
+    scheduleAt(txFinishTime,sent);
+}
+
+void gbnNodeTx::finish(){
+
+    EV << "El throughput es: " << txdpackets/simTime();
 }
 
 

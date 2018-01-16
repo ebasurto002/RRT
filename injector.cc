@@ -14,6 +14,9 @@ class injector: public cSimpleModule{
     private:
         int numSeq;
         simtime_t startTime;
+        int npaquetes;
+        int sentPackets;
+        double bitLength;
         paquete *nuevoPqt;
     public:
         virtual ~injector();
@@ -33,19 +36,25 @@ void injector::initialize(){
     startTime = 20;
     nuevoPqt = new paquete();
     numSeq = 0;
+    npaquetes = (int)par("n_paquetes");
+    sentPackets = 0;
     scheduleAt(startTime, nuevoPqt);
 }
 
 void injector::handleMessage(cMessage *msg){
     paquete *pqt = generaPaquete();
     send(pqt,"outSnd");
-    scheduleAt(simTime()+exponential(2),nuevoPqt);
+    sentPackets++;
+    if(sentPackets < npaquetes){
+        scheduleAt(simTime()+exponential(1/9.375),nuevoPqt);
+    }
 }
 paquete * injector::generaPaquete(){
     char nombrePaquete[15];
     sprintf(nombrePaquete,"msg-%d",numSeq);
     paquete *msg = new paquete(nombrePaquete,0);
-    msg -> setBitLength(1024);
+    bitLength = 10240;
+    msg -> setBitLength(bitLength);
     msg -> setNumSeq(numSeq);
     numSeq++;
     return msg;

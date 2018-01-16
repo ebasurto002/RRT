@@ -64,7 +64,7 @@ swNodeTx::swNodeTx(){
 swNodeTx::~swNodeTx(){
     /*Destructor*/
     cancelAndDelete(sent);
-    delete pckt;
+    delete(pckt);
     txQueue->~cQueue();
 }
 
@@ -128,12 +128,13 @@ void swNodeTx::handleMessage(cMessage *msg){
             switch(pqt ->getType()){
                 case ack:
                     cancelEvent(timeoutEvent);
+                    numPaquete++;
                     if(txQueue->isEmpty()){
                         status = idle;
-                        numPaquete++;
+
                     }
                     else{
-                        numPaquete++;
+
                         delete(message);
                         message = (paquete *)txQueue->pop();
                         sendCopyOf(message);
@@ -168,7 +169,7 @@ void swNodeTx::finish(){
 //Cosas de las estadísticas
     double pkgErrorRate = (1-(double)numPaquete/(double)txdpackets);
     EV<<"Package error rate: "<<pkgErrorRate<<endl;
-    EV<<"Throughput: "<<numPaquete/simTime()<<endl;
+    EV<<"Throughput: "<< numPaquete/simTime()<<endl;
     thStat.recordAs("Throughput");
 
 }
