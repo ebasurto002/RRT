@@ -166,7 +166,7 @@ void gbnNodeTx::handleMessage(cMessage *msg){
                     if(nACKQueue->getLength() != 0){
                         paquete *pq = (paquete*)nACKQueue->pop();//Se extrae el paquete de la cola
                         delete(pq);//Y se elimina
-                        pck2Repeat = 0; //Se ajusta el número del paquete que hay que repetir
+                        --pck2Repeat; //Se ajusta el número del paquete que hay que repetir
                         totalRep = nACKQueue->getLength(); //Se ajusta el total de paquetes para repetir, para ajustar los punteros a la cola
                         //Si hubiera variables para las estadísticas. Hacerlo al final
                     }

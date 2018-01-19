@@ -26,7 +26,7 @@ simple swNodeTx
 simple swNodeRx
 {
     parameters:
-        @display("i=block/routing");       
+        @display("i=block/routing");
     gates:
         input in;
         output out;
@@ -43,15 +43,21 @@ simple injector
 
 network swNetwork
 {
+    @display("bgb=279,130");
     types:
-        channel C extends ned.DatarateChannel {
+        channel C extends ned.DatarateChannel
+        {
             datarate = 96000bps;
-            delay=100ms;
-            per= 0.5;
+            delay = 100ms;
+            per = 0.5;
         }
     submodules:
-        swSndr: swNodeTx;
-        swRcvr: swNodeRx;
+        swSndr: swNodeTx {
+            @display("p=78,62");
+        }
+        swRcvr: swNodeRx {
+            @display("p=251,94");
+        }
         src: injector;
     connections:
         src.outSnd --> swSndr.inSnd;
